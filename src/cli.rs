@@ -1,5 +1,5 @@
-use clap::{Parser, Subcommand, command};
-use std::path::{Path, PathBuf};
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "cdrip")]
