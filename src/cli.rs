@@ -29,5 +29,8 @@ pub enum Commands {
         /// Path to aiff files
         #[arg(short, long)]
         path: PathBuf,
+        /// Delete original aiff files after conversion
+        #[arg(short, long, default_value_t = false)]
+        delete: bool,
     },
 }
