@@ -24,4 +24,10 @@ pub enum Commands {
         #[arg(short, long)]
         media: Option<String>,
     },
+    /// Make flac files from aiff files (Requires ffmpeg)
+    Makeflac {
+        /// Path to aiff files
+        #[arg(short, long)]
+        path: PathBuf,
+    },
 }

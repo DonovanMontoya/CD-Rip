@@ -13,5 +13,8 @@ fn main() {
         Commands::View { media } => {
             println!("View: device: {:?}", media);
         }
+        Commands::Makeflac { path } => {
+            println!("MakeFlac: path: {:?}", path);
+        }
     }
 }
