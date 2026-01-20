@@ -1,10 +1,11 @@
 use crate::cli::{Cli, Commands};
+use anyhow::Result;
 use clap::Parser;
 
 mod cli;
 mod makeflac;
 
-fn main() {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -19,7 +20,10 @@ fn main() {
             output,
             delete,
         } => {
-            println!("MakeFlac: path: {:?}, delete: {:?}", path, delete);
+            let output_path = output.as_deref().unwrap_or(&path);
+            makeflac::run(&path, output_path, delete)?;
         }
     }
+
+    Ok(())
 }

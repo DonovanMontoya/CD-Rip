@@ -30,7 +30,7 @@ pub enum Commands {
         #[arg(short, long)]
         path: PathBuf,
 
-        /// Output directory for flac files
+        /// Output directory for flac files (defaults to the input path if not specified)
         #[arg(short, long)]
         output: Option<PathBuf>,
 

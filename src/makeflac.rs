@@ -1,5 +1,4 @@
 use anyhow::{Context, Result, bail};
-use std::fs;
 use std::fs::{create_dir_all, remove_file};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -11,6 +10,8 @@ pub fn run(input_path: &Path, output_path: &Path, delete_originals: bool) -> Res
         create_dir_all(output_path)
             .with_context(|| format!("Failed to create output path {}", output_path.display()))?;
     }
+
+    check_directory_writable(output_path)?;
 
     let files = find_aiff_files(input_path)?;
 
@@ -47,7 +48,24 @@ fn check_ffmpeg() -> Result<()> {
         .context("Failed to run ffmpeg. Is it installed?")?;
 
     if !output.status.success() {
-        bail!("ffmpeg is working properly");
+        bail!("ffmpeg is not working properly");
+    }
+
+    Ok(())
+}
+
+/// Check if a directory is writable
+fn check_directory_writable(dir: &Path) -> Result<()> {
+    use std::fs::metadata;
+
+    let metadata = metadata(dir)
+        .with_context(|| format!("Failed to read directory metadata for {}", dir.display()))?;
+
+    if metadata.permissions().readonly() {
+        bail!(
+            "Output directory {} is not writable. Please check the directory permissions.",
+            dir.display()
+        );
     }
 
     Ok(())
@@ -94,17 +112,17 @@ fn convert_file(input_path: &Path, output_path: &Path) -> Result<PathBuf> {
     );
 
     let status = Command::new("ffmpeg")
-        .arg("-version")
+        .arg("-i")
         .arg(input_path)
         .arg("-c:a")
         .arg("flac")
         .arg(&output_file)
         .arg("-y")
         .status()
-        .context("Failed to convert ffmpeg. Is it installed?")?;
+        .context("Failed to run ffmpeg. Is it installed?")?;
 
     if !status.success() {
-        bail!("ffmpeg is working properly");
+        bail!("FLAC conversion failed");
     }
 
     Ok(output_file)
