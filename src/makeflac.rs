@@ -1,11 +1,42 @@
 use anyhow::{Context, Result, bail};
 use std::fs;
+use std::fs::{create_dir_all, remove_file};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub fn run(input_path: &Path, output_path: &Path, delete_originals: bool) -> Result<()> {
-    //tofo
-    todo!()
+    check_ffmpeg()?;
+
+    if !output_path.exists() {
+        create_dir_all(output_path)
+            .with_context(|| format!("Failed to create output path {}", output_path.display()))?;
+    }
+
+    let files = find_aiff_files(input_path)?;
+
+    if files.is_empty() {
+        println!("No audio files found in {}", input_path.display());
+        return Ok(());
+    }
+
+    println!(
+        "Found {} audio files in {}",
+        files.len(),
+        output_path.display()
+    );
+
+    for file in &files {
+        convert_file(file, output_path)?;
+
+        if delete_originals {
+            remove_file(file)
+                .with_context(|| format!("Failed to delete audio file {}", file.display()))?;
+            println!("Deleted audio file {}", file.display());
+        }
+    }
+
+    println!("Conversion complete");
+    Ok(())
 }
 
 /// Check if ffmpeg is installed and working properly
