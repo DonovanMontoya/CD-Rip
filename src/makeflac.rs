@@ -46,3 +46,35 @@ fn find_aiff_files(dir: &Path) -> Result<Vec<PathBuf>> {
 
     Ok(files)
 }
+
+/// Convert a single AIFF file to FLAC
+fn convert_file(input_path: &Path, output_path: &Path) -> Result<PathBuf> {
+    // Build output Path: same filename but .flac extension
+    let file_stem = input_path
+        .file_stem()
+        .context("Failed to get file stem from input_path")?;
+
+    let output_file = output_path.join(file_stem).with_extension("flac");
+
+    println!(
+        "Converting {} -> {}",
+        input_path.display(),
+        output_file.display()
+    );
+
+    let status = Command::new("ffmpeg")
+        .arg("-version")
+        .arg(input_path)
+        .arg("-c:a")
+        .arg("flac")
+        .arg(&output_file)
+        .arg("-y")
+        .status()
+        .context("Failed to convert ffmpeg. Is it installed?")?;
+
+    if !status.success() {
+        bail!("ffmpeg is working properly");
+    }
+
+    Ok(output_file)
+}
