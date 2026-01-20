@@ -2,6 +2,7 @@ use crate::cli::{Cli, Commands};
 use clap::Parser;
 
 mod cli;
+mod makeflac;
 
 fn main() {
     let cli = Cli::parse();
@@ -13,7 +14,11 @@ fn main() {
         Commands::View { media } => {
             println!("View: device: {:?}", media);
         }
-        Commands::Makeflac { path, delete } => {
+        Commands::Makeflac {
+            path,
+            output,
+            delete,
+        } => {
             println!("MakeFlac: path: {:?}, delete: {:?}", path, delete);
         }
     }
