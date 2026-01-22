@@ -60,8 +60,12 @@ jobs:
     needs: build-artifacts
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout tap repo
         uses: actions/checkout@v4
+        with:
+          repository: DonovanMontoya/homebrew-ipod-tools
+          path: tap
+          token: ${{ secrets.TAP_REPO_TOKEN }}
 
       - name: Set tarball URL
         id: tarball
@@ -90,7 +94,7 @@ jobs:
 
           version = os.environ["VERSION"]
           sha = os.environ["SHA"]
-          path = pathlib.Path("Formula/cdrip.rb")
+          path = pathlib.Path("tap/Formula/cdrip.rb")
           text = path.read_text()
           text = re.sub(
               r'url "https://github.com/DonovanMontoya/CD-Rip/archive/refs/tags/[^"]+\.tar\.gz"',
@@ -103,11 +107,11 @@ jobs:
 
       - name: Commit formula update
         run: |
-          if git diff --quiet; then
+          if git -C tap diff --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git add Formula/cdrip.rb
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+          git -C tap add Formula/cdrip.rb
+          git -C tap -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "Update Homebrew formula for ${{ inputs.version }}"
-          git push
+          git -C tap push
