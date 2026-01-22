@@ -1,0 +1,69 @@
+name: Update Brew Formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag version (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    name: Update Formula SHA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set tarball URL
+        id: tarball
+        run: |
+          echo "url=https://github.com/DonovanMontoya/CD-Rip/archive/refs/tags/${{ inputs.version }}.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Download tarball
+        run: |
+          curl -L "${{ steps.tarball.outputs.url }}" -o source.tar.gz
+
+      - name: Compute sha256
+        id: shasum
+        run: |
+          SHA=$(shasum -a 256 source.tar.gz | awk '{print $1}')
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Update formula
+        env:
+          VERSION: ${{ inputs.version }}
+          SHA: ${{ steps.shasum.outputs.sha }}
+        run: |
+          python - <<'PY'
+          import pathlib
+          import re
+          import os
+
+          version = os.environ["VERSION"]
+          sha = os.environ["SHA"]
+          path = pathlib.Path("Formula/cdrip.rb")
+          text = path.read_text()
+          text = re.sub(
+              r'url "https://github.com/DonovanMontoya/CD-Rip/archive/refs/tags/[^"]+\.tar\.gz"',
+              f'url "https://github.com/DonovanMontoya/CD-Rip/archive/refs/tags/{version}.tar.gz"',
+              text,
+          )
+          text = re.sub(r'sha256 "[0-9a-fA-F]+"', f'sha256 "{sha}"', text)
+          path.write_text(text)
+          PY
+
+      - name: Commit formula update
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git add Formula/cdrip.rb
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Update Homebrew formula for ${{ inputs.version }}"
+          git push
